@@ -4,7 +4,7 @@ pub mod clone;
 use anyhow::Result;
 use clap::Subcommand;
 
-use crate::{Config, Task};
+use crate::{Config, Exec, Task};
 
 #[derive(Debug, Subcommand)]
 pub enum Commands {
@@ -22,7 +22,7 @@ impl Task for Commands {
             Self::Git(args) => {
                 let repo = &config.repo;
                 repo.require()?;
-                config.exec.run(repo.cmd(None, args))
+                Exec::run(&mut repo.cmd(args))
             }
         }
     }

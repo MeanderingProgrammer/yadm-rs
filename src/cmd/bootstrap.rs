@@ -15,7 +15,7 @@ impl Task for Bootstrap {
     fn run(&self, config: &Config) -> Result<()> {
         let bootstrap = &config.bootstrap;
         if !bootstrap.is_file() || !executable(bootstrap) {
-            bail!("Bootstrap is not executable: {}", bootstrap.display())
+            bail!("bootstrap is not executable: {}", bootstrap.display())
         }
         // TODO: actually execute it
         Ok(())

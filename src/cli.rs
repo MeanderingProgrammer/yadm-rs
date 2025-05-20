@@ -17,7 +17,6 @@ pub struct Cli {
 
 impl Task for Cli {
     fn run(&self, config: &Config) -> Result<()> {
-        // cargo run -- --help
         self.command.run(config)
     }
 }

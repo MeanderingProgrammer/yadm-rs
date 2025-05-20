@@ -16,6 +16,8 @@ use exec::Exec;
 use repo::Repo;
 
 fn main() -> Result<()> {
+    // cargo run -- --help
+
     // cargo run -- clone
     // cargo run -- clone --help
     // cargo run -- clone git@github.com:MeanderingProgrammer/dotfiles.git
@@ -37,6 +39,6 @@ fn validate() -> Result<()> {
     if cmd.output().is_ok() {
         Ok(())
     } else {
-        bail!("Git is required, command not found: {:?}", cmd)
+        bail!("git is required, command not found: {:?}", cmd)
     }
 }

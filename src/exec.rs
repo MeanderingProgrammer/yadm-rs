@@ -2,33 +2,29 @@ use std::process::Command;
 
 use anyhow::{Result, bail};
 
+const DEBUG: bool = false;
+
 #[derive(Debug)]
-pub struct Exec {
-    debug: bool,
-}
+pub struct Exec;
 
 impl Exec {
-    pub fn new(debug: bool) -> Self {
-        Self { debug }
-    }
-
-    pub fn run(&self, mut cmd: Command) -> Result<()> {
+    pub fn run(cmd: &mut Command) -> Result<()> {
         println!("exec run: {:?}", cmd);
-        if self.debug {
+        if DEBUG {
             Ok(())
         } else {
             let status = cmd.status()?;
             if status.success() {
                 Ok(())
             } else {
-                bail!("Command failed: {status}")
+                bail!("command failed: {status}")
             }
         }
     }
 
-    pub fn output(&self, mut cmd: Command) -> Result<Vec<String>> {
+    pub fn output(cmd: &mut Command) -> Result<Vec<String>> {
         println!("exec output: {:?}", cmd);
-        if self.debug {
+        if DEBUG {
             Ok(Vec::default())
         } else {
             let output = cmd.output()?;

@@ -4,14 +4,13 @@ use std::{env, fs};
 use anyhow::{Result, bail};
 use rand::{Rng, distr::Alphanumeric};
 
-use crate::{Exec, Repo};
+use crate::Repo;
 
 #[derive(Debug)]
 pub struct Config {
     pub work: PathBuf,
     pub bootstrap: PathBuf,
     pub repo: Repo,
-    pub exec: Exec,
 }
 
 impl Config {
@@ -29,7 +28,7 @@ impl Config {
             .unwrap_or_else(|| home.clone().join(".local/share").join(name));
 
         if !work.exists() {
-            bail!("Work tree does not exist: {}", work.display());
+            bail!("work tree does not exist: {}", work.display());
         }
         if !config.exists() {
             fs::create_dir_all(&config)?;
@@ -42,7 +41,6 @@ impl Config {
             work,
             bootstrap: config.join("bootstrap"),
             repo: Repo::new(data, "repo.git"),
-            exec: Exec::new(false),
         })
     }
 

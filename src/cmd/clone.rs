@@ -3,7 +3,7 @@ use std::fs;
 use anyhow::Result;
 use clap::Parser;
 
-use crate::{Config, Task};
+use crate::{Config, Exec, Task};
 
 #[derive(Debug, Parser)]
 /// Clone an existing repository
@@ -24,7 +24,6 @@ impl Task for Clone {
     fn run(&self, config: &Config) -> Result<()> {
         let work = &config.work;
         let repo = &config.repo;
-        let exec = &config.exec;
 
         repo.absent()?;
 
@@ -32,46 +31,50 @@ impl Task for Clone {
         fs::create_dir_all(&temp)?;
 
         // first clone without checkout
-        exec.run(repo.cmd(
-            Some(&temp),
-            &[
-                "-c",
-                "core.sharedrepository=0600",
-                "clone",
-                "--no-checkout",
-                format!("--separate-git-dir={}", repo.root.display()).as_str(),
-                &self.url,
-                &repo.folder,
-            ],
-        ))?;
+        let mut clone = repo.cmd(&[
+            "-c",
+            "core.sharedrepository=0600",
+            "clone",
+            "--no-checkout",
+            format!("--separate-git-dir={}", repo.root.display()).as_str(),
+            &self.url,
+            &repo.folder,
+        ]);
+        Exec::run(clone.current_dir(&temp))?;
 
-        // change bare to false (there is a working directory)
-        exec.run(repo.cmd(None, &["config", "core.bare", "false"]))?;
-        // set the worktree for the yadm repo
-        exec.run(repo.cmd(None, &["config", "core.worktree", work.to_str().unwrap()]))?;
-        // by default, do not show untracked files and directories
-        exec.run(repo.cmd(None, &["config", "status.showUntrackedFiles", "no"]))?;
-        // possibly used later to ensure we're working on the correct repo
-        exec.run(repo.cmd(None, &["config", "yadm.rs.managed", "true"]))?;
+        let configs = [
+            // change bare to false (there is a working directory)
+            ("core.bare", "false"),
+            // set the worktree for the yadm repo
+            ("core.worktree", &work.to_string_lossy()),
+            // by default, do not show untracked files and directories
+            ("status.showUntrackedFiles", "no"),
+            // possibly used later to ensure we're working on the correct repo
+            ("yadm.rs.managed", "true"),
+        ];
+        for (key, value) in configs {
+            Exec::run(&mut repo.cmd(&["config", key, value]))?;
+        }
 
         fs::remove_dir_all(temp)?;
 
         // then reset the index as the --no-checkout flag makes the index empty
-        exec.run(repo.cmd(None, &["reset", "--quiet", "--", ":/"]))?;
+        Exec::run(&mut repo.cmd(&["reset", "--quiet", "--", ":/"]))?;
 
         // finally check out (unless instructed not to) all files that don't exist in work directory
         if !self.no_checkout {
-            let deleted = exec.output(repo.cmd(Some(work), &["ls-files", "--deleted"]))?;
+            let deleted = Exec::output(repo.cmd(&["ls-files", "--deleted"]).current_dir(work))?;
             for file in deleted {
-                exec.run(repo.cmd(Some(work), &["checkout", "--", &format!(":/{}", file)]))?;
+                let mut checkout = repo.cmd(&["checkout", "--", &format!(":/{}", file)]);
+                Exec::run(checkout.current_dir(work))?;
             }
 
             // TODO: handle submodules
             // git submodule update --init --recursive -- <path>
 
-            let modified = exec.output(repo.cmd(Some(work), &["ls-files", "--modified"]))?;
+            let modified = Exec::output(repo.cmd(&["ls-files", "--modified"]).current_dir(work))?;
             if !modified.is_empty() {
-                println!("Local files with content that differs from the ones just cloned");
+                println!("local files with content that differs from the ones just cloned");
                 println!("found in {:?}, they have been left unmodified", work);
             }
         }

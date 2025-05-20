@@ -6,3 +6,4 @@ edition = "2024"
 [dependencies]
 anyhow = "1.0.98"
 clap = { version = "4.5.38", features = ["derive"] }
+rand = "0.9.1"

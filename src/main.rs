@@ -1,26 +1,42 @@
 mod cli;
 mod cmd;
+mod config;
+mod exec;
+mod repo;
 
 use std::process::Command;
 
 use anyhow::{Result, bail};
 use clap::Parser;
 
-use crate::cli::Task;
+use cli::{Cli, Task};
+use cmd::Commands;
+use config::Config;
+use exec::Exec;
+use repo::Repo;
 
 fn main() -> Result<()> {
-    require_git()?;
-    let cli = cli::Cli::parse();
-    println!("{:?}", cli);
-    cli.run()?;
+    // cargo run -- clone
+    // cargo run -- clone --help
+    // cargo run -- clone git@github.com:MeanderingProgrammer/dotfiles.git
+    // cargo run -- clone --bootstrap git@github.com:MeanderingProgrammer/dotfiles.git
+
+    // cargo run -- bootstrap
+    // cargo run -- bootstrap --help
+
+    validate()?;
+    let cli = Cli::parse();
+    let config = Config::new()?;
+    cli.run(&config)?;
     Ok(())
 }
 
-fn require_git() -> Result<()> {
-    let cmd = "git";
-    if Command::new(cmd).arg("--version").output().is_ok() {
+fn validate() -> Result<()> {
+    let mut cmd = Command::new("git");
+    cmd.arg("--version");
+    if cmd.output().is_ok() {
         Ok(())
     } else {
-        bail!("Git is required, command '{cmd}' cannot be located.")
+        bail!("Git is required, command not found: {:?}", cmd)
     }
 }

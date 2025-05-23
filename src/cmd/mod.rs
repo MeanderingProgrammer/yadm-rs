@@ -5,11 +5,13 @@ use anyhow::Result;
 use clap::Subcommand;
 
 use crate::{Config, Exec, Task};
+use bootstrap::Bootstrap;
+use clone::Clone;
 
 #[derive(Debug, Subcommand)]
 pub enum Commands {
-    Clone(clone::Clone),
-    Bootstrap(bootstrap::Bootstrap),
+    Clone(Clone),
+    Bootstrap(Bootstrap),
     #[command(external_subcommand)]
     Git(Vec<String>),
 }

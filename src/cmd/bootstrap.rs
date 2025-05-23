@@ -1,15 +1,20 @@
 use std::fs;
 use std::os::unix::fs::PermissionsExt;
 use std::path::PathBuf;
+use std::process::Command;
 
 use anyhow::{Result, bail};
 use clap::Parser;
 
-use crate::{Config, Task};
+use crate::{Config, Exec, Task};
 
-#[derive(Debug, Parser)]
+#[derive(Debug, Default, Parser)]
 /// Execute the bootstrap script
-pub struct Bootstrap {}
+pub struct Bootstrap {
+    /// Arguments passed to bootstrap script
+    #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+    args: Vec<String>,
+}
 
 impl Task for Bootstrap {
     fn run(&self, config: &Config) -> Result<()> {
@@ -17,8 +22,8 @@ impl Task for Bootstrap {
         if !bootstrap.is_file() || !executable(bootstrap) {
             bail!("bootstrap is not executable: {}", bootstrap.display())
         }
-        // TODO: actually execute it
-        Ok(())
+        let mut command = Command::new(bootstrap);
+        Exec::run(command.args(&self.args))
     }
 }
 

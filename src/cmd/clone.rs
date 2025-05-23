@@ -3,7 +3,7 @@ use std::fs;
 use anyhow::Result;
 use clap::Parser;
 
-use crate::{Config, Exec, Task};
+use crate::{Config, Exec, Task, cmd::Bootstrap};
 
 #[derive(Debug, Parser)]
 /// Clone an existing repository
@@ -77,6 +77,11 @@ impl Task for Clone {
                 println!("local files with content that differs from the ones just cloned");
                 println!("found in {:?}, they have been left unmodified", work);
             }
+        }
+
+        // execute the bootstrap script
+        if self.bootstrap {
+            Bootstrap::default().run(config)?;
         }
 
         Ok(())

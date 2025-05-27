@@ -24,7 +24,6 @@ impl Task for Clone {
     fn run(&self, state: &State) -> Result<()> {
         let work = &state.work;
         let repo = &state.repo;
-
         repo.absent()?;
 
         let temp = state.temp();

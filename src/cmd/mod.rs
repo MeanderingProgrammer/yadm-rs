@@ -1,3 +1,4 @@
+pub mod alt;
 pub mod bootstrap;
 pub mod clone;
 pub mod list;
@@ -6,6 +7,7 @@ use anyhow::Result;
 use clap::Subcommand;
 
 use crate::{Exec, State, Task};
+use alt::Alt;
 use bootstrap::Bootstrap;
 use clone::Clone;
 use list::List;
@@ -15,6 +17,7 @@ pub enum Commands {
     Clone(Clone),
     List(List),
     Bootstrap(Bootstrap),
+    Alt(Alt),
     #[command(external_subcommand)]
     Git(Vec<String>),
 }
@@ -25,6 +28,7 @@ impl Task for Commands {
             Self::Clone(task) => task.run(state),
             Self::List(task) => task.run(state),
             Self::Bootstrap(task) => task.run(state),
+            Self::Alt(task) => task.run(state),
             Self::Git(args) => {
                 let repo = &state.repo;
                 repo.require()?;

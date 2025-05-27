@@ -1,11 +1,17 @@
 use std::fs;
 use std::path::Path;
+use std::process::Command;
 
 use anyhow::Result;
 use serde::Deserialize;
 
+use crate::Exec;
+
 #[derive(Debug, Default, Deserialize)]
 pub struct Config {
+    #[serde(default)]
+    pub alt: Alt,
+
     #[serde(default)]
     pub git: Git,
 }
@@ -19,6 +25,64 @@ impl Config {
         } else {
             Ok(Config::default())
         }
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Alt {
+    #[serde(default)]
+    class: Vec<String>,
+
+    #[serde(default = "Alt::default_arch")]
+    arch: String,
+
+    #[serde(default = "Alt::default_os")]
+    os: String,
+
+    #[serde(default = "Alt::default_hostname")]
+    hostname: String,
+
+    #[serde(default = "Alt::default_user")]
+    user: String,
+}
+
+impl Default for Alt {
+    fn default() -> Self {
+        Self {
+            class: Vec::default(),
+            arch: Self::default_arch(),
+            os: Self::default_os(),
+            hostname: Self::default_hostname(),
+            user: Self::default_user(),
+        }
+    }
+}
+
+impl Alt {
+    fn default_arch() -> String {
+        Self::first(Command::new("uname").arg("-m"))
+    }
+
+    fn default_os() -> String {
+        // TODO: handle WSL
+        Self::first(Command::new("uname").arg("-s"))
+    }
+
+    fn default_hostname() -> String {
+        let result = Self::first(Command::new("uname").arg("-n"));
+        match result.split_once('.') {
+            Some((prefix, _)) => prefix.to_string(),
+            None => result,
+        }
+    }
+
+    fn default_user() -> String {
+        Self::first(Command::new("id").arg("-u").arg("-n"))
+    }
+
+    fn first(cmd: &mut Command) -> String {
+        let lines = Exec::output(cmd).unwrap();
+        lines[0].clone()
     }
 }
 

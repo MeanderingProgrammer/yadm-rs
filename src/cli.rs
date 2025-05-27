@@ -1,10 +1,10 @@
 use anyhow::Result;
 use clap::Parser;
 
-use crate::{Commands, Config};
+use crate::{Commands, State};
 
 pub trait Task {
-    fn run(&self, config: &Config) -> Result<()>;
+    fn run(&self, state: &State) -> Result<()>;
 }
 
 #[derive(Debug, Parser)]
@@ -16,7 +16,7 @@ pub struct Cli {
 }
 
 impl Task for Cli {
-    fn run(&self, config: &Config) -> Result<()> {
-        self.command.run(config)
+    fn run(&self, state: &State) -> Result<()> {
+        self.command.run(state)
     }
 }

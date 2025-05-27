@@ -4,7 +4,7 @@ pub mod clone;
 use anyhow::Result;
 use clap::Subcommand;
 
-use crate::{Config, Exec, Task};
+use crate::{Exec, State, Task};
 use bootstrap::Bootstrap;
 use clone::Clone;
 
@@ -17,12 +17,12 @@ pub enum Commands {
 }
 
 impl Task for Commands {
-    fn run(&self, config: &Config) -> Result<()> {
+    fn run(&self, state: &State) -> Result<()> {
         match self {
-            Self::Clone(task) => task.run(config),
-            Self::Bootstrap(task) => task.run(config),
+            Self::Clone(task) => task.run(state),
+            Self::Bootstrap(task) => task.run(state),
             Self::Git(args) => {
-                let repo = &config.repo;
+                let repo = &state.repo;
                 repo.require()?;
                 Exec::run(&mut repo.cmd(args))
             }

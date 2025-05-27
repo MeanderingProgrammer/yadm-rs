@@ -3,7 +3,7 @@ use std::fs;
 use anyhow::Result;
 use clap::Parser;
 
-use crate::{Config, Exec, Task, cmd::Bootstrap};
+use crate::{Exec, State, Task, cmd::Bootstrap};
 
 #[derive(Debug, Parser)]
 /// Clone an existing repository
@@ -21,13 +21,13 @@ pub struct Clone {
 }
 
 impl Task for Clone {
-    fn run(&self, config: &Config) -> Result<()> {
-        let work = &config.work;
-        let repo = &config.repo;
+    fn run(&self, state: &State) -> Result<()> {
+        let work = &state.work;
+        let repo = &state.repo;
 
         repo.absent()?;
 
-        let temp = config.temp();
+        let temp = state.temp();
         fs::create_dir_all(&temp)?;
 
         // first clone without checkout
@@ -81,7 +81,7 @@ impl Task for Clone {
 
         // execute the bootstrap script
         if self.bootstrap {
-            Bootstrap::default().run(config)?;
+            Bootstrap::default().run(state)?;
         }
 
         Ok(())

@@ -3,6 +3,7 @@ mod cmd;
 mod config;
 mod exec;
 mod repo;
+mod state;
 
 use std::process::Command;
 
@@ -14,6 +15,7 @@ use cmd::Commands;
 use config::Config;
 use exec::Exec;
 use repo::Repo;
+use state::State;
 
 fn main() -> Result<()> {
     // cargo run -- --help
@@ -26,15 +28,15 @@ fn main() -> Result<()> {
     // cargo run -- bootstrap
     // cargo run -- bootstrap --help
 
-    validate()?;
+    let state = State::new()?;
+    validate(&state.repo.program)?;
     let cli = Cli::parse();
-    let config = Config::new()?;
-    cli.run(&config)?;
+    cli.run(&state)?;
     Ok(())
 }
 
-fn validate() -> Result<()> {
-    let mut cmd = Command::new("git");
+fn validate(program: &str) -> Result<()> {
+    let mut cmd = Command::new(program);
     cmd.arg("--version");
     if cmd.output().is_ok() {
         Ok(())

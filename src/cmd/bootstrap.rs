@@ -6,7 +6,7 @@ use std::process::Command;
 use anyhow::{Result, bail};
 use clap::Parser;
 
-use crate::{Config, Exec, Task};
+use crate::{Exec, State, Task};
 
 #[derive(Debug, Default, Parser)]
 /// Execute the bootstrap script
@@ -17,8 +17,8 @@ pub struct Bootstrap {
 }
 
 impl Task for Bootstrap {
-    fn run(&self, config: &Config) -> Result<()> {
-        let bootstrap = &config.bootstrap;
+    fn run(&self, state: &State) -> Result<()> {
+        let bootstrap = &state.bootstrap;
         if !bootstrap.is_file() || !executable(bootstrap) {
             bail!("bootstrap is not executable: {}", bootstrap.display())
         }

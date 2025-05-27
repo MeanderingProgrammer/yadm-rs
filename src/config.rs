@@ -1,60 +1,43 @@
-use std::path::PathBuf;
-use std::{env, fs};
+use std::fs;
+use std::path::Path;
 
-use anyhow::{Result, bail};
-use rand::{Rng, distr::Alphanumeric};
+use anyhow::Result;
+use serde::Deserialize;
 
-use crate::Repo;
-
-#[derive(Debug)]
+#[derive(Debug, Default, Deserialize)]
 pub struct Config {
-    pub work: PathBuf,
-    pub bootstrap: PathBuf,
-    pub repo: Repo,
+    #[serde(default)]
+    pub git: Git,
 }
 
 impl Config {
-    pub fn new() -> Result<Self> {
-        let home = Self::env("HOME").unwrap();
-        let name = "yadm-rs";
-
-        // TODO: remove extra join when I really wanna use it
-        let work = Self::env("YADM_RS_WORK").unwrap_or_else(|| home.clone().join(name));
-        let config = Self::env("YADM_RS_CONFIG")
-            .or_else(|| Self::env("XDG_CONFIG_HOME").map(|path| path.join(name)))
-            .unwrap_or_else(|| home.clone().join(".config").join(name));
-        let data = Self::env("YADM_RS_DATA")
-            .or_else(|| Self::env("XDG_DATA_HOME").map(|path| path.join(name)))
-            .unwrap_or_else(|| home.clone().join(".local/share").join(name));
-
-        if !work.exists() {
-            bail!("work tree does not exist: {}", work.display());
+    pub fn new(path: &Path) -> Result<Self> {
+        if path.is_file() {
+            let text = fs::read_to_string(path)?;
+            let result: Self = toml::from_str(&text)?;
+            Ok(result)
+        } else {
+            Ok(Config::default())
         }
-        if !config.exists() {
-            fs::create_dir_all(&config)?;
-        }
-        if !data.exists() {
-            fs::create_dir_all(&data)?;
-        }
-
-        Ok(Self {
-            work,
-            bootstrap: config.join("bootstrap"),
-            repo: Repo::new(data, "repo.git"),
-        })
     }
+}
 
-    fn env(key: &str) -> Option<PathBuf> {
-        env::var(key).map(PathBuf::from).ok()
+#[derive(Debug, Deserialize)]
+pub struct Git {
+    #[serde(default = "Git::default_program")]
+    pub program: String,
+}
+
+impl Default for Git {
+    fn default() -> Self {
+        Self {
+            program: Self::default_program(),
+        }
     }
+}
 
-    pub fn temp(&self) -> PathBuf {
-        let data = self.repo.root.parent().unwrap();
-        let suffix: String = rand::rng()
-            .sample_iter(&Alphanumeric)
-            .take(12)
-            .map(char::from)
-            .collect();
-        data.join(format!("tmp.{suffix}"))
+impl Git {
+    fn default_program() -> String {
+        "git".into()
     }
 }

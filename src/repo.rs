@@ -6,13 +6,15 @@ use anyhow::{Result, bail};
 
 #[derive(Debug)]
 pub struct Repo {
+    pub program: String,
     pub root: PathBuf,
     pub folder: String,
 }
 
 impl Repo {
-    pub fn new(parent: PathBuf, folder: &str) -> Self {
+    pub fn new(program: &str, parent: PathBuf, folder: &str) -> Self {
         Self {
+            program: program.into(),
             root: parent.join(folder),
             folder: folder.into(),
         }
@@ -35,7 +37,7 @@ impl Repo {
     }
 
     pub fn cmd<S: AsRef<OsStr>>(&self, args: &[S]) -> Command {
-        let mut cmd = Command::new("git");
+        let mut cmd = Command::new(&self.program);
         cmd.args(args);
         // yadm uses GIT_DIR=$(mixed_path "$YADM_REPO")
         cmd.env("GIT_DIR", &self.root);
